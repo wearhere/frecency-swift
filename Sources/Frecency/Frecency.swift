@@ -15,17 +15,32 @@ public class Frecency<SearchResult> {
     
     public struct StorageLimits {
         // Max number of timestamps to save for recent selections of a result.
-        var timestamps = 10
+        public var timestamps: Int
         
         // Max number of IDs that should be stored in frecency to limit the object size.
-        var recentSelections = 100
+        public var recentSelections: Int
+        
+        // Unfortunately, default memberwise initializers are merely internal.
+        public init(timestamps: Int = 10, recentSelections: Int = 100) {
+            self.timestamps = timestamps
+            self.recentSelections = recentSelections
+        }
     }
     
     // This module expects `exactQuery > subQuery > recentSelection`.
     public struct MatchWeights {
-        var exactQuery = 1.0
-        var subQuery = 0.7
-        var recentSelection = 0.5
+        public var exactQuery: Double
+        public var subQuery: Double
+        public var recentSelection: Double
+        
+        // Unfortunately, default memberwise initializers are merely internal.
+        public init(exactQuery: Double = 1.0,
+             subQuery: Double = 0.7,
+             recentSelection: Double = 0.5) {
+            self.exactQuery = exactQuery
+            self.subQuery = subQuery
+            self.recentSelection = recentSelection
+        }
     }
     
     private let key: String
