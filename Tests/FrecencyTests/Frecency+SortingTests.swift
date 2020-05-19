@@ -39,6 +39,22 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
+            it("should preserve sort order of non-recent selections") {
+                frecency.select("😄", for: "sm")
+                
+                let results = frecency.sort(["😁", "🎉", "😄", "😀"])
+                let expectedResults: [Emoji] = ["😄", "😁", "🎉", "😀"]
+                expect(results).to(equal(expectedResults))
+            }
+            
+            it("can return only recent selections") {
+                frecency.select("😄", for: "sm")
+                
+                let results = frecency.sort(["😁", "🎉", "😄", "😀"], limitToRecents: true)
+                let expectedResults: [Emoji] = ["😄"]
+                expect(results).to(equal(expectedResults))
+            }
+            
             it("should sort higher if search query was recently selected") {
               frecency.select("😄", for: "sm")
 

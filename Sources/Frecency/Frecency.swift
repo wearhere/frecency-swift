@@ -140,18 +140,17 @@ public class Frecency<SearchResult> {
     
     // Sorts a list of search results based on the saved frecency data.
     // TODO(jeff): Make an asynchronous / parallel version of this.
-    public func sort(_ results: [SearchResult], for query: String? = nil) -> [SearchResult] {
+    public func sort(_ results: [SearchResult], for query: String? = nil, limitToRecents: Bool = false) -> [SearchResult] {
         let scores = self.scores(for: results, query: query)
         
         // Sort recent selections by frecency. Otherwise, preserve the existing
         // sort order (e.g. that set by the search algorithm).
         let recentSelections = scores.filter { $0.1 > 0 }
-        let otherSelections = scores.filter { $0.1 == 0 }
+        let otherResults = scores.filter { $0.1 == 0 }
         
-        return (
-            // Highest score first.
-            recentSelections.sorted(by: { $0.1 > $1.1 }) +
-            otherSelections)
-            .map { $0.0 }
+        // Highest score first.
+        var results = recentSelections.sorted(by: { $0.1 > $1.1 })
+        if !limitToRecents { results += otherResults }
+        return results.map { $0.0 }
     }
 }
