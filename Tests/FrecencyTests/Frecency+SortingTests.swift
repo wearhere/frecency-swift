@@ -23,7 +23,7 @@ final class FrecencySortingSpec: QuickSpec {
             }
             
             it("should sort if search query is empty") {
-                expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+                frecency.select("😄", for: "sm")
                 
                 let results = frecency.sort(["😁", "😄", "😀"])
                 let expectedResults: [Emoji] = ["😄", "😁", "😀"]
@@ -31,7 +31,7 @@ final class FrecencySortingSpec: QuickSpec {
             }
             
             it("should sort higher if search query was recently selected") {
-              expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+              frecency.select("😄", for: "sm")
 
               let results = frecency.sort(["😁", "😄", "😀"], for: "sm")
               let expectedResults: [Emoji] = ["😄", "😁", "😀"]
@@ -39,7 +39,7 @@ final class FrecencySortingSpec: QuickSpec {
             }
             
             it("should sort higher if search query is a subquery of recently-selected query") {
-                expect { try frecency.select("😄", for: "smil") }.toNot(throwError())
+                frecency.select("😄", for: "smil")
                 
                 let results = frecency.sort(["😁", "😄", "😀"], for: "sm")
                 let expectedResults: [Emoji] = ["😄", "😁", "😀"]
@@ -47,7 +47,7 @@ final class FrecencySortingSpec: QuickSpec {
             }
             
             it("should sort higher if an ID was recently selected") {
-                expect { try frecency.select("😄", for: "smil") }.toNot(throwError())
+                frecency.select("😄", for: "smil")
 
                 let results = frecency.sort(["😁", "😄", "😀"], for: "face")
                 let expectedResults: [Emoji] = ["😄", "😁", "😀"]
@@ -60,13 +60,13 @@ final class FrecencySortingSpec: QuickSpec {
                 // We select 😄 3 times, but many days earlier.
                 for _ in 0..<3 {
                     let time = now - 7 * day
-                    expect { try frecency.select("😄", for: "sm", time: time) }.toNot(throwError())
+                    frecency.select("😄", for: "sm", time: time)
                 }
 
                 // We select 😊 2 times, but within the last hour.
                 for _ in 0..<2 {
                     let time = now - hour
-                    expect { try frecency.select("😊", for: "sm", time: time) }.toNot(throwError())
+                    frecency.select("😊", for: "sm", time: time)
                 }
                 
                 let results = frecency.sort(["😄", "😀", "😊"], for: "sm")
@@ -76,13 +76,13 @@ final class FrecencySortingSpec: QuickSpec {
             
             it("should give non-exact matches a reduced score") {
                 // We'll use this as an exact match.
-                expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+                frecency.select("😄", for: "sm")
                 
                 // We'll use this as a sub-query match.
-                expect { try frecency.select("😀", for: "smil") }.toNot(throwError())
+                frecency.select("😀", for: "smil")
                 
                 // We'll use this as an ID match.
-                expect { try frecency.select("😊", for: "face") }.toNot(throwError())
+                frecency.select("😊", for: "face")
                 
                 let results = frecency.sort(["😊", "😄", "😀", "🎉"], for: "sm")
                 let expectedResults: [Emoji] = ["😄", "😀", "😊", "🎉"]
@@ -92,7 +92,7 @@ final class FrecencySortingSpec: QuickSpec {
             it("supports functional identifier") {
                 frecency = Frecency<Emoji>(key: "emoji", resultIdentifier: .function({ $0.emoji }))
                 
-                expect { try frecency.select("😄", for: "smi") }.toNot(throwError())
+                frecency.select("😄", for: "smi")
                 
                 
                 let results = frecency.sort(["😊", "😄"], for: "smi")
@@ -104,10 +104,10 @@ final class FrecencySortingSpec: QuickSpec {
                 let now = Date().timeIntervalSince1970
 
                 let tooOld = now - 15 * day
-                expect { try frecency.select("😄", for: "sm", time: tooOld) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: tooOld)
 
                 let moreRecent = now - 2 * day
-                expect { try frecency.select("😄", for: "smile", time: moreRecent) }.toNot(throwError())
+                frecency.select("😄", for: "smile", time: moreRecent)
                 
                 let results = frecency.sort(["😀", "😊", "😄"], for: "sm")
                 let expectedResults: [Emoji] = ["😄", "😀", "😊"]
@@ -118,13 +118,24 @@ final class FrecencySortingSpec: QuickSpec {
                 let now = Date().timeIntervalSince1970
                 
                 let tooOld = now - 15 * day
-                expect { try frecency.select("😄", for: "smile", time: tooOld) }.toNot(throwError())
+                frecency.select("😄", for: "smile", time: tooOld)
                 
                 let moreRecent = now - 2 * day
-                expect { try frecency.select("😄", for: "smi", time: moreRecent) }.toNot(throwError())
+                frecency.select("😄", for: "smi", time: moreRecent)
                 
                 let results = frecency.sort(["😀", "😊", "😄"], for: "smile")
                 let expectedResults: [Emoji] = ["😄", "😀", "😊"]
+                expect(results).to(equal(expectedResults))
+            }
+            
+            it("is thread-safe") {
+                frecency.select("😄", for: "sm")
+                
+                var results: [Emoji]!
+                DispatchQueue.global(qos: .userInteractive).sync {
+                    results = frecency.sort(["😁", "😄", "😀"], for: "sm")
+                }
+                let expectedResults: [Emoji] = ["😄", "😁", "😀"]
                 expect(results).to(equal(expectedResults))
             }
         }

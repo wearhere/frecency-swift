@@ -14,38 +14,40 @@ final class FrecencySelectionSpec: QuickSpec {
         
         describe("select") {
             it("saves to UserDefaults") {
-                expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+                frecency.select("😄", for: "sm")
+                frecency.synchronize()
                 
                 let savedData = UserDefaults.standard.data(forKey: defaultsKey)
                 expect(savedData).toNot(beNil())
             }
             
             it("loads from UserDefaults") {
-                expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+                frecency.select("😄", for: "sm")
+                frecency.synchronize()
                 
                 let frecency2 = Frecency<Emoji>(key: "emoji", resultIdentifier: .keyPath(\.emoji))
+                frecency2.synchronize()
                 expect(frecency2.frecency).to(equal(frecency.frecency))
             }
             
             it("does not reload from UserDefaults after first load") {
                 let frecency2 = Frecency<Emoji>(key: "emoji", resultIdentifier: .keyPath(\.emoji))
+                frecency2.synchronize()
                 
-                // Force both instances to load.
-                let _ = frecency.frecency
-                let _ = frecency2.frecency
-                
-                expect { try frecency.select("😄", for: "sm") }.toNot(throwError())
+                frecency.select("😄", for: "sm")
+                frecency.synchronize()
                 
                 expect(frecency2.frecency).toNot(equal(frecency.frecency))
             }
             
             it("stores multiple queries") {
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😁", for: "grin", time: time2 ) }.toNot(throwError())
+                frecency.select("😁", for: "grin", time: time2)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": ["😄": Selection(timesSelected: 1, selectedAt: [time1])],
@@ -60,11 +62,12 @@ final class FrecencySelectionSpec: QuickSpec {
             
             it("stores different selections for the same query") {
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
                 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😀", for: "sm", time: time2 ) }.toNot(throwError())
+                frecency.select("😀", for: "sm", time: time2)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": [
@@ -81,14 +84,15 @@ final class FrecencySelectionSpec: QuickSpec {
             
             it("stores selections multiple times") {
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😄", for: "sm", time: time2 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time2)
 
                 let time3: TimeInterval = 1589844048.952414
-                expect { try frecency.select("😄", for: "sm", time: time3 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time3)
 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": [
@@ -103,14 +107,15 @@ final class FrecencySelectionSpec: QuickSpec {
             
             it("stores same selections with different queries") {
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
                 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😄", for: "sm", time: time2 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time2)
                 
                 let time3: TimeInterval = 1589844048.952414
-                expect { try frecency.select("😄", for: "smi", time: time3 ) }.toNot(throwError())
+                frecency.select("😄", for: "smi", time: time3)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": [
@@ -132,17 +137,18 @@ final class FrecencySelectionSpec: QuickSpec {
                 frecency = Frecency(key: "emoji", resultIdentifier: .keyPath(\.emoji), storageLimits: storageLimits)
                 
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
                 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😄", for: "sm", time: time2 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time2)
                 
                 let time3: TimeInterval = 1589844048.952414
-                expect { try frecency.select("😄", for: "sm", time: time3 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time3)
                 
                 let time4: TimeInterval = 1589844420.952584
-                expect { try frecency.select("😄", for: "sm", time: time4 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time4)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": [
@@ -161,17 +167,18 @@ final class FrecencySelectionSpec: QuickSpec {
                 frecency = Frecency(key: "emoji", resultIdentifier: .keyPath(\.emoji), storageLimits: storageLimits)
                 
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
                 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😄", for: "smi", time: time2 ) }.toNot(throwError())
+                frecency.select("😄", for: "smi", time: time2)
                 
                 let time3: TimeInterval = 1589844048.952414
-                expect { try frecency.select("😄", for: "sm", time: time3 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time3)
                 
                 let time4: TimeInterval = 1589844420.952584
-                expect { try frecency.select("😄", for: "smi", time: time4 ) }.toNot(throwError())
+                frecency.select("😄", for: "smi", time: time4)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": [
@@ -193,17 +200,18 @@ final class FrecencySelectionSpec: QuickSpec {
                 frecency = Frecency(key: "emoji", resultIdentifier: .keyPath(\.emoji), storageLimits: storageLimits)
 
                 let time1: TimeInterval = 1589843274.5214009
-                expect { try frecency.select("😄", for: "sm", time: time1 ) }.toNot(throwError())
+                frecency.select("😄", for: "sm", time: time1)
                 
                 let time2: TimeInterval = 1589843421.4224958
-                expect { try frecency.select("😀", for: "sm", time: time2 ) }.toNot(throwError())
+                frecency.select("😀", for: "sm", time: time2)
                 
                 let time3: TimeInterval = 1589844048.952414
-                expect { try frecency.select("😁", for: "grin", time: time3 ) }.toNot(throwError())
+                frecency.select("😁", for: "grin", time: time3)
                 
                 let time4: TimeInterval = 1589844420.952584
-                expect { try frecency.select("😁", for: "gri", time: time4 ) }.toNot(throwError())
+                frecency.select("😁", for: "gri", time: time4)
                 
+                frecency.synchronize()
                 expect(frecency.frecency).to(equal(FrecencyData(
                     queries: [
                         "sm": ["😀": Selection(timesSelected: 1, selectedAt: [time2])],

@@ -38,7 +38,10 @@ public class Frecency<SearchResult> {
     // Internal for the benefit of `Frecency+Scoring` and the tests.
     internal let weights: MatchWeights
     internal let resultIdentifier: ResultIdentifier
-    internal lazy var frecency: FrecencyData = loadFrecencyData()
+    internal var frecency: FrecencyData!
+    internal lazy var frecencyQueue: DispatchQueue = {
+        DispatchQueue(label: "com.frecency.queues.\(key)", qos: .userInteractive, attributes: .concurrent)
+    }()
     
     init(
         key: String,
@@ -49,6 +52,11 @@ public class Frecency<SearchResult> {
         self.resultIdentifier = resultIdentifier
         self.storageLimits = storageLimits
         self.weights = weights
+        
+        frecencyQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            self.frecency = self.loadFrecencyData()
+        }
     }
     
     // Reads frecency data from storage and returns the frecency object if
@@ -68,15 +76,45 @@ public class Frecency<SearchResult> {
     }
 
     // Updates frecency data after user selects a result.
-    public func select(_ id: String, for query: String, time: TimeInterval? = nil) throws {
+    
+    // TODO(jeff): Figure out how to test the error handler. I don't think that
+    // storage ever fails given that our data does not contain any doubles
+    // nor floats and we don't manually encode
+    // https://github.com/apple/swift/blob/bf1b17d4ed08120d43c7b9d0c57a169e1386beca/test/stdlib/TestJSONEncoder.swift#L467
+    public func select(_ id: String, for query: String, time: TimeInterval? = nil, errorHandler: ((Error) -> Void)? = nil) {
         let time = time ?? Date().timeIntervalSince1970
-        frecency.select(id, for: query, time: time, limits: storageLimits)
-        try storeFrecencyData()
+        
+        frecencyQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            
+            self.frecency.select(id, for: query, time: time, limits: self.storageLimits)
+            do {
+                try self.storeFrecencyData()
+            } catch {
+                guard let errorHandler = errorHandler else { return }
+                errorHandler(error)
+            }
+        }
+    }
+    
+    // Blocks until the object has finished processing any updates to frecency
+    // data including writing the data to disk.
+    //
+    // Useful in the tests, and in your app if you plan to dismiss your UI
+    // immediately after updating the selection.
+    //
+    // If you don't need this to be synchronous, use the version with a
+    // completion handler instead.
+    public func synchronize() {
+        frecencyQueue.sync { /* nothing to do */ }
+    }
+    
+    public func synchronize(_ completion: @escaping () -> Void) {
+        frecencyQueue.async(execute: completion)
     }
     
     // Sorts a list of search results based on the saved frecency data.
-    // TODO(jeff): Make an asynchronous version of this / make this class
-    // thread-safe.
+    // TODO(jeff): Make an asynchronous / parallel version of this.
     public func sort(_ results: [SearchResult], for query: String? = nil) -> [SearchResult] {
         let scores = self.scores(for: results, query: query)
         
