@@ -10,12 +10,16 @@ let package = Package(
             name: "Frecency",
             targets: ["Frecency"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "2.2.0")),
+        .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "8.0.9"))
+    ],
     targets: [
         .target(
             name: "Frecency",
             dependencies: []),
         .testTarget(
-            name: "Frecency-Tests",
-            dependencies: ["Frecency"]),
+            name: "FrecencyTests",
+            dependencies: ["Frecency", "Quick", "Nimble"]),
     ]
 )

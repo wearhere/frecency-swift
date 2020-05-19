@@ -1,7 +1,10 @@
 import XCTest
+import Quick
 
-import FrecencyTests
+@testable import FrecencyTests
 
-var tests = [XCTestCaseEntry]()
-tests += FrecencyTests.allTests()
-XCTMain(tests)
+QCKMain([
+    FrecencySelectionTests.self
+    FrecencySortingTests.self,
+    StringIsSubQueryTests.self
+])
