@@ -43,7 +43,7 @@ public class Frecency<SearchResult> {
         DispatchQueue(label: "com.frecency.queues.\(key)", qos: .userInteractive, attributes: .concurrent)
     }()
     
-    init(
+    public init(
         key: String,
         resultIdentifier: ResultIdentifier,
         storageLimits: StorageLimits = StorageLimits(),
