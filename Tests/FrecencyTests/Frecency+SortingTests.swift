@@ -71,8 +71,16 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
-            it("should sort higher if an ID was recently selected") {
+            it("should sort higher if an ID was recently selected (with different query)") {
                 frecency.select("😄", for: "smil")
+
+                let results = frecency.sort(["😁", "😄", "😀"], for: "face")
+                let expectedResults: [Emoji] = ["😄", "😁", "😀"]
+                expect(results).to(equal(expectedResults))
+            }
+            
+            it("should sort higher if an ID was recently selected (with no query)") {
+                frecency.select("😄")
 
                 let results = frecency.sort(["😁", "😄", "😀"], for: "face")
                 let expectedResults: [Emoji] = ["😄", "😁", "😀"]

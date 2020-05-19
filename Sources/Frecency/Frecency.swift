@@ -96,7 +96,7 @@ public class Frecency<SearchResult> {
     // storage ever fails given that our data does not contain any doubles
     // nor floats and we don't manually encode
     // https://github.com/apple/swift/blob/bf1b17d4ed08120d43c7b9d0c57a169e1386beca/test/stdlib/TestJSONEncoder.swift#L467
-    public func select(_ id: String, for query: String, time: TimeInterval? = nil, errorHandler: ((Error) -> Void)? = nil) {
+    public func select(_ id: String, for query: String? = nil, time: TimeInterval? = nil, errorHandler: ((Error) -> Void)? = nil) {
         let time = time ?? Date().timeIntervalSince1970
         
         frecencyQueue.async(flags: .barrier) { [weak self] in

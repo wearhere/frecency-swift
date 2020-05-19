@@ -25,10 +25,12 @@ struct FrecencyData: Codable, Equatable {
     private(set) var recentSelections: RecentSelections = []
     
     // Records that the user has selected a result.
-    mutating func select<SearchResult>(_ id: SelectionId, for query: Query, time: TimeInterval, limits: Frecency<SearchResult>.StorageLimits) {
-        // Record that this result was selected for the particular query.
-        if queries[query] == nil { queries[query] = [:] }
-        queries[query]?.select(id, time: time, timestampsLimit: limits.timestamps)
+    mutating func select<SearchResult>(_ id: SelectionId, for query: Query?, time: TimeInterval, limits: Frecency<SearchResult>.StorageLimits) {
+        if let query = query {
+            // Record that this result was selected for the particular query.
+            if queries[query] == nil { queries[query] = [:] }
+            queries[query]?.select(id, time: time, timestampsLimit: limits.timestamps)
+        }
         
         // Record that the result was selected regardless of query.
         selections.select(id, time: time, timestampsLimit: limits.timestamps)

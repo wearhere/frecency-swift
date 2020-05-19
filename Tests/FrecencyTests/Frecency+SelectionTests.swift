@@ -131,6 +131,19 @@ final class FrecencySelectionSpec: QuickSpec {
                     recentSelections: ["😄"])))
             }
             
+            it("stores selections with no queries") {
+                let time1: TimeInterval = 1589843274.5214009
+                frecency.select("😄", time: time1)
+                
+                frecency.synchronize()
+                expect(frecency.frecency).to(equal(FrecencyData(
+                    queries: [:],
+                    selections: [
+                        "😄": Selection(timesSelected: 1, selectedAt: [time1])
+                    ],
+                    recentSelections: ["😄"])))
+            }
+            
             it("limits number of timestamps per query") {
                 var storageLimits = Frecency<Emoji>.StorageLimits()
                 storageLimits.timestamps = 3
