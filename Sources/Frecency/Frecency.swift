@@ -97,6 +97,16 @@ public class Frecency<SearchResult> {
         }
     }
     
+    // Resets stored frecency data.
+    public func reset() {
+        frecencyQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            
+            UserDefaults.standard.removeObject(forKey: self.defaultsKey)
+            self.frecency = FrecencyData()
+        }
+    }
+    
     // Blocks until the object has finished processing any updates to frecency
     // data including writing the data to disk.
     //

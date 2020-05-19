@@ -22,6 +22,15 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
+            it("should not sort after reset") {
+                frecency.select("😄", for: "sm")
+                frecency.reset()
+                
+                let results = frecency.sort(["😁", "😄", "😀"])
+                let expectedResults: [Emoji] = ["😁", "😄", "😀"]
+                expect(results).to(equal(expectedResults))
+            }
+            
             it("should sort if search query is empty") {
                 frecency.select("😄", for: "sm")
                 
