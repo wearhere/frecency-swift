@@ -155,6 +155,7 @@ public class Frecency<SearchResult> {
         // us preserve the existing sort order for non-recent selections (see
         // the comment in `Array#sort(limitToRecents:)`).
         let count = results.count
+        let chunkSize = chunkSize > 0 ? chunkSize : 1
         let numChunks = Int(ceil(Double(count) / Double(chunkSize)))
         var scoredChunks = [[ScoredResult]?](repeating: nil, count: numChunks)
         

@@ -71,6 +71,18 @@ final class FrecencySortingSpec: QuickSpec {
                 }
             }
             
+            it("should guard against a chunk size of 0") {
+                frecency.select("😄", for: "sm")
+
+                waitUntil { done in
+                    frecency.sort(["😁", "🎉", "😄", "😀"], chunkSize: 0) { results in
+                        let expectedResults: [Emoji] = ["😄", "😁", "🎉", "😀"]
+                        expect(results).to(equal(expectedResults))
+                        done()
+                    }
+                }
+            }
+            
             it("can return only recent selections") {
                 frecency.select("😄", for: "sm")
                 
