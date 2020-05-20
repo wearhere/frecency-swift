@@ -11,7 +11,7 @@ extension Frecency {
     typealias ScoredResult = (SearchResult, Double)
     
     // WARNING: This function must be called from `frecencyQueue`.
-    internal func scores(for results: [SearchResult], query: String? = nil) -> [ScoredResult] {
+    func scores(for results: [SearchResult], query: String? = nil) -> [ScoredResult] {
         let now = Date().timeIntervalSince1970
 
         return results.map { result in
