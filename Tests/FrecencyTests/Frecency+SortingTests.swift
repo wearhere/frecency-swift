@@ -31,12 +31,24 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
-            it("should sort if search query is empty") {
+            it("should sort when search query is empty") {
                 frecency.select("😄", for: "sm")
                 
                 let results = frecency.sort(["😁", "😄", "😀"])
                 let expectedResults: [Emoji] = ["😄", "😁", "😀"]
                 expect(results).to(equal(expectedResults))
+            }
+            
+            it("should sort asynchronously when search query is empty") {
+                frecency.select("😄", for: "sm")
+                
+                waitUntil { done in
+                    frecency.sort(["😁", "😄", "😀"]) { results in
+                        let expectedResults: [Emoji] = ["😄", "😁", "😀"]
+                        expect(results).to(equal(expectedResults))
+                        done()
+                    }
+                }
             }
             
             it("should preserve sort order of non-recent selections") {
@@ -47,6 +59,18 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
+            it("should preserve sort order of non-recent selections when sorting asynchronously") {
+                frecency.select("😄", for: "sm")
+
+                waitUntil { done in
+                    frecency.sort(["😁", "🎉", "😄", "😀"], chunkSize: 2) { results in
+                        let expectedResults: [Emoji] = ["😄", "😁", "🎉", "😀"]
+                        expect(results).to(equal(expectedResults))
+                        done()
+                    }
+                }
+            }
+            
             it("can return only recent selections") {
                 frecency.select("😄", for: "sm")
                 
@@ -55,12 +79,36 @@ final class FrecencySortingSpec: QuickSpec {
                 expect(results).to(equal(expectedResults))
             }
             
+            it("can return only recent selections when sorting asynchronously") {
+                frecency.select("😄", for: "sm")
+                
+                waitUntil { done in
+                    frecency.sort(["😁", "🎉", "😄", "😀"], limitToRecents: true) { results in
+                        let expectedResults: [Emoji] = ["😄"]
+                        expect(results).to(equal(expectedResults))
+                        done()
+                    }
+                }
+            }
+            
             it("should sort higher if search query was recently selected") {
-              frecency.select("😄", for: "sm")
+                frecency.select("😄", for: "sm")
+                
+                let results = frecency.sort(["😁", "😄", "😀"], for: "sm")
+                let expectedResults: [Emoji] = ["😄", "😁", "😀"]
+                expect(results).to(equal(expectedResults))
+            }
+            
+            it("should asynchronously sort higher if search query was recently selected") {
+                frecency.select("😄", for: "sm")
 
-              let results = frecency.sort(["😁", "😄", "😀"], for: "sm")
-              let expectedResults: [Emoji] = ["😄", "😁", "😀"]
-              expect(results).to(equal(expectedResults))
+                waitUntil { done in
+                    frecency.sort(["😁", "😄", "😀"], for: "sm") { results in
+                        let expectedResults: [Emoji] = ["😄", "😁", "😀"]
+                        expect(results).to(equal(expectedResults))
+                        done()
+                    }
+                }
             }
             
             it("should sort higher if search query is a subquery of recently-selected query") {

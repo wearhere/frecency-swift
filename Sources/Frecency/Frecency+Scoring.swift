@@ -8,42 +8,41 @@
 import Foundation
 
 extension Frecency {
-    internal func scores(for results: [SearchResult], query: String? = nil) -> [(SearchResult, Double)] {
+    typealias ScoredResult = (SearchResult, Double)
+    
+    // WARNING: This function must be called from `frecencyQueue`.
+    internal func scores(for results: [SearchResult], query: String? = nil) -> [ScoredResult] {
         let now = Date().timeIntervalSince1970
 
-        var resultsAndScores: [(SearchResult, Double)]!
-        frecencyQueue.sync {
-            resultsAndScores = results.map { result in
-                let resultId = resultIdentifier.id(result)
+        return results.map { result in
+            let resultId = resultIdentifier.id(result)
 
-                // Try calculating frecency score in order of weight.
-                if let query = query {
-                    // Try calculating frecency score by exact query match.
-                    if let selection = frecency.queries[query]?[resultId] {
-                        let score = weights.exactQuery * selection.score(at: now)
-                        if score > 0 { return (result, score) }
-                    }
-                    
-                    // Try calculating frecency score by sub-query match.
-                    let fullQueries = frecency.queries.keys.filter { query.isSubQuery(of: $0) }
-                    for fullQuery in fullQueries {
-                        if let selection = frecency.queries[fullQuery]?[resultId] {
-                            let score = weights.subQuery * selection.score(at: now)
-                            if score > 0 { return (result, score) }
-                        }
-                    }
-                }
-                
-                // Try calculating frecency score by ID.
-                if let selection = frecency.selections[resultId] {
-                    let score = weights.recentSelection * selection.score(at: now)
+            // Try calculating frecency score in order of weight.
+            if let query = query {
+                // Try calculating frecency score by exact query match.
+                if let selection = frecency.queries[query]?[resultId] {
+                    let score = weights.exactQuery * selection.score(at: now)
                     if score > 0 { return (result, score) }
                 }
                 
-                return (result, 0)
+                // Try calculating frecency score by sub-query match.
+                let fullQueries = frecency.queries.keys.filter { query.isSubQuery(of: $0) }
+                for fullQuery in fullQueries {
+                    if let selection = frecency.queries[fullQuery]?[resultId] {
+                        let score = weights.subQuery * selection.score(at: now)
+                        if score > 0 { return (result, score) }
+                    }
+                }
             }
+            
+            // Try calculating frecency score by ID.
+            if let selection = frecency.selections[resultId] {
+                let score = weights.recentSelection * selection.score(at: now)
+                if score > 0 { return (result, score) }
+            }
+            
+            return (result, 0)
         }
-        return resultsAndScores
     }
 }
 

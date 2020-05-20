@@ -54,8 +54,9 @@ public class Frecency<SearchResult> {
     internal let weights: MatchWeights
     internal let resultIdentifier: ResultIdentifier
     internal var frecency: FrecencyData!
-    internal lazy var frecencyQueue: DispatchQueue = {
-        DispatchQueue(label: "com.frecency.queues.\(key)", qos: .userInteractive, attributes: .concurrent)
+    
+    private lazy var frecencyQueue: DispatchQueue = {
+        DispatchQueue(label: "com.frecency.frecencyqueues.\(key)", qos: .userInteractive, attributes: .concurrent)
     }()
     
     public init(
@@ -139,14 +140,55 @@ public class Frecency<SearchResult> {
     }
     
     // Sorts a list of search results based on the saved frecency data.
-    // TODO(jeff): Make an asynchronous / parallel version of this.
     public func sort(_ results: [SearchResult], for query: String? = nil, limitToRecents: Bool = false) -> [SearchResult] {
-        let scores = self.scores(for: results, query: query)
+        var scoredResults: [ScoredResult]!
+        frecencyQueue.sync {
+            scoredResults = scores(for: results, query: query)
+        }
+        return scoredResults.sort(limitToRecents: limitToRecents)
+    }
+    
+    public func sort(_ results: [SearchResult], for query: String? = nil, limitToRecents: Bool = false, chunkSize: Int = 10, completion: @escaping ([SearchResult]) -> Void) {
+        // Score the results in chunks in the background, then combine them to
+        // do final sorting. Make sure to collect the scored chunks in the
+        // order that they were present in the initial array: this will let
+        // us preserve the existing sort order for non-recent selections (see
+        // the comment in `Array#sort(limitToRecents:)`).
+        let count = results.count
+        let numChunks = Int(ceil(Double(count) / Double(chunkSize)))
+        var scoredChunks = [[ScoredResult]?](repeating: nil, count: numChunks)
         
+        // Serialize the writes from the background, for thread safety.
+        let scoredChunksQueue = DispatchQueue(label: "com.frecency.sortqueues.\(key)")
+        
+        let scoringGroup = DispatchGroup()
+        stride(from: 0, to: count, by: chunkSize).forEach { offset in
+            let chunkIndex = offset / chunkSize
+            let chunk = Array(results[offset..<min(offset + chunkSize, count)])
+            scoringGroup.enter()
+            frecencyQueue.async {
+                let scores = self.scores(for: chunk, query: query)
+                scoredChunksQueue.async {
+                    scoredChunks[chunkIndex] = scores
+                    scoringGroup.leave()
+                }
+            }
+        }
+        
+        scoringGroup.notify(queue: scoredChunksQueue) {
+            let scoredResults: [ScoredResult] = scoredChunks.flatMap { $0! }
+            let results = scoredResults.sort(limitToRecents: limitToRecents)
+            DispatchQueue.main.async { completion(results) }
+        }
+    }
+}
+
+extension Array {
+    func sort<SearchResult>(limitToRecents: Bool) -> [SearchResult] where Element == Frecency<SearchResult>.ScoredResult {
         // Sort recent selections by frecency. Otherwise, preserve the existing
         // sort order (e.g. that set by the search algorithm).
-        let recentSelections = scores.filter { $0.1 > 0 }
-        let otherResults = scores.filter { $0.1 == 0 }
+        let recentSelections = filter { $0.1 > 0 }
+        let otherResults = filter { $0.1 == 0 }
         
         // Highest score first.
         var results = recentSelections.sorted(by: { $0.1 > $1.1 })
