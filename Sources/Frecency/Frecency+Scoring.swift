@@ -91,6 +91,6 @@ extension String {
             queryStrings.remove(at: matchIndex)
         }
         
-        return true;
+        return true
     }
 }
