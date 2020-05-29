@@ -4,7 +4,7 @@ import Quick
 @testable import FrecencyTests
 
 QCKMain([
-    FrecencySelectionTests.self
+    FrecencySelectionTests.self,
     FrecencySortingTests.self,
     StringIsSubQueryTests.self
 ])
